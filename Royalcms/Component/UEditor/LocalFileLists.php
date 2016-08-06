@@ -1,8 +1,16 @@
 <?php namespace Royalcms\Component\UEditor;
-
-
-class Lists
+/**
+ * 获取本地文件列表
+ * @author royalwang
+ *
+ */
+class LocalFileLists
 {
+    protected $allowFiles;
+    protected $listSize;
+    protected $path;
+    protected $request;
+    
     public function __construct($allowFiles, $listSize, $path, $request)
     {
         $this->allowFiles = substr(str_replace(".", "|", join("", $allowFiles)), 1);
@@ -13,7 +21,6 @@ class Lists
 
     public function getList()
     {
-
         $size = $this->request->get('size', $this->listSize);
         $start = $this->request->get('start', 0);
         $end = $start + $size;
@@ -22,12 +29,12 @@ class Lists
 
         $files = $this->getfiles($path, $this->allowFiles);
         if (!count($files)) {
-            return [
+            return array(
                 "state" => "no match file",
                 "list" => array(),
                 "start" => $start,
                 "total" => count($files)
-            ];
+            );
         }
 
         /* 获取指定范围的列表 */
@@ -38,12 +45,12 @@ class Lists
 
 
         /* 返回数据 */
-        $result = [
+        $result = array(
             "state" => "SUCCESS",
             "list" => $list,
             "start" => $start,
             "total" => count($files)
-        ];
+        );
 
         return $result;
     }
@@ -57,7 +64,7 @@ class Lists
     {
 
         if (!is_dir($path)) return null;
-        if(substr($path, strlen($path) - 1) != '/') $path .= '/';
+        if (substr($path, strlen($path) - 1) != '/') $path .= '/';
         $handle = opendir($path);
         while (false !== ($file = readdir($handle))) {
             if ($file != '.' && $file != '..') {
@@ -65,7 +72,7 @@ class Lists
                 if (is_dir($path2)) {
                     $this->getfiles($path2, $allowFiles, $files);
                 } else {
-                    if (preg_match("/\.(".$allowFiles.")$/i", $file)) {
+                    if (preg_match('/\.('.$allowFiles.')$/i', $file)) {
                         $files[] = array(
                             'url'=> substr($path2, strlen($_SERVER['DOCUMENT_ROOT'])),
                             'mtime'=> filemtime($path2)

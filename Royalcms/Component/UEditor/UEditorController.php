@@ -75,19 +75,11 @@ class UEditorController extends BaseController
      */
     public function listimage(Request $request)
     {
-        if (RC_Config('ueditor.core.mode') == 'local') {
-            $result = with(new Lists(
+        $result = with(new Lists(
                 $this->config['imageManagerAllowFiles'],
                 $this->config['imageManagerListSize'],
                 $this->config['imageManagerListPath'],
                 $request))->getList();
-        } else if (RC_Config('ueditor.core.mode') == 'qiniu') {
-            $result = with(new ListsQiniu(
-                $this->config['imageManagerAllowFiles'],
-                $this->config['imageManagerListSize'],
-                $this->config['imageManagerListPath'],
-                $request))->getList();
-        }
         return $result;
     }
     
@@ -97,19 +89,11 @@ class UEditorController extends BaseController
      */
     public function listfile(Request $request)
     {
-        if (RC_Config('ueditor.core.mode') == 'local') {
-            $result = with(new Lists(
-                $this->config['fileManagerAllowFiles'],
-                $this->config['fileManagerListSize'],
-                $this->config['fileManagerListPath'],
-                $request))->getList();
-        }else if (RC_Config('ueditor.core.mode') == 'qiniu') {
-            $result = with(new ListsQiniu(
-                $this->config['fileManagerAllowFiles'],
-                $this->config['fileManagerListSize'],
-                $this->config['fileManagerListPath'],
-                $request))->getList();
-        }
+        $result = with(new Lists(
+            $this->config['fileManagerAllowFiles'],
+            $this->config['fileManagerListSize'],
+            $this->config['fileManagerListPath'],
+            $request))->getList();
         return $result;
     }
     

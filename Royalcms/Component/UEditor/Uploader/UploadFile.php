@@ -1,6 +1,6 @@
 <?php namespace Royalcms\Component\UEditor\Uploader;
 
-use Royalcms\Component\UEditor\Uploader\Upload;
+use Royalcms\Component\UEditor\Uploader\UploadAbstract;
 
 /**
  *
@@ -11,7 +11,8 @@ use Royalcms\Component\UEditor\Uploader\Upload;
  *
  * @package Royalcms\Component\UEditor\Uploader
  */
-class UploadFile  extends Upload{
+class UploadFile  extends UploadAbstract
+{
 //     use UploadQiniu;
     public function doUpload()
     {

@@ -1,13 +1,13 @@
 <?php namespace Royalcms\Component\UEditor\Uploader;
 
-use Royalcms\Component\UEditor\Uploader\Upload;
+use Royalcms\Component\UEditor\Uploader\UploadAbstract;
 
 /**
  * Class UploadScrawl
  * 涂鸦上传
  * @package Royalcms\Component\UEditor\Uploader
  */
-class UploadScrawl extends Upload
+class UploadScrawl extends UploadAbstract
 {
     use UploadQiniu;
 
