@@ -1,0 +1,163 @@
+<?php namespace Royalcms\Component\UEditor;
+
+use Royalcms\Component\Routing\Controller as BaseController;
+use Royalcms\Component\HttpKernel\Request;
+use Royalcms\Component\UEditor\Uploader\UploadScrawl;
+use Royalcms\Component\UEditor\Uploader\UploadFile;
+use Royalcms\Component\UEditor\Uploader\UploadCatch;
+
+class UEditorController extends BaseController
+{
+    private $config;
+
+    public function __construct()
+    {
+        $this->config = RC_Config('ueditor.upload');
+    }
+
+    public function config(Request $request) 
+    {
+        return $this->config;
+    }
+    
+    public function uploadimage(Request $request) 
+    {
+        $upConfig = array(
+            "pathFormat"    => $this->config['imagePathFormat'],
+            "maxSize"       => $this->config['imageMaxSize'],
+            "allowFiles"    => $this->config['imageAllowFiles'],
+            'fieldName'     => $this->config['imageFieldName'],
+        );
+        $result = with(new UploadFile($upConfig, $request))->upload();
+        return $result;
+    }
+    
+    public function uploadscrawl(Request $request)
+    {
+        $upConfig = array(
+            "pathFormat"    => $this->config['scrawlPathFormat'],
+            "maxSize"       => $this->config['scrawlMaxSize'],
+            //   "allowFiles" => $config['scrawlAllowFiles'],
+            "oriName"       => "scrawl.png",
+            'fieldName'     => $this->config['scrawlFieldName'],
+        );
+        $result = with(new UploadScrawl($upConfig, $request))->upload();
+        return $result;
+    }
+    
+    public function uploadvideo(Request $request)
+    {
+        $upConfig = array(
+            "pathFormat"    => $this->config['videoPathFormat'],
+            "maxSize"       => $this->config['videoMaxSize'],
+            "allowFiles"    => $this->config['videoAllowFiles'],
+            'fieldName'     => $this->config['videoFieldName'],
+        );
+        $result = with(new UploadFile($upConfig, $request))->upload();
+        return $result;
+    }
+    
+    public function uploadfile(Request $request)
+    {
+        $upConfig = array(
+            "pathFormat"    => $this->config['filePathFormat'],
+            "maxSize"       => $this->config['fileMaxSize'],
+            "allowFiles"    => $this->config['fileAllowFiles'],
+            'fieldName'     => $this->config['fileFieldName'],
+        );
+        $result = with(new UploadFile($upConfig, $request))->upload();
+        return $result;
+    }
+    
+    /**
+     * 列出图片
+     * @param Request $request
+     */
+    public function listimage(Request $request)
+    {
+        if (RC_Config('ueditor.core.mode') == 'local') {
+            $result = with(new Lists(
+                $this->config['imageManagerAllowFiles'],
+                $this->config['imageManagerListSize'],
+                $this->config['imageManagerListPath'],
+                $request))->getList();
+        } else if (RC_Config('ueditor.core.mode') == 'qiniu') {
+            $result = with(new ListsQiniu(
+                $this->config['imageManagerAllowFiles'],
+                $this->config['imageManagerListSize'],
+                $this->config['imageManagerListPath'],
+                $request))->getList();
+        }
+        return $result;
+    }
+    
+    /**
+     * 列出文件
+     * @param Request $request
+     */
+    public function listfile(Request $request)
+    {
+        if (RC_Config('ueditor.core.mode') == 'local') {
+            $result = with(new Lists(
+                $this->config['fileManagerAllowFiles'],
+                $this->config['fileManagerListSize'],
+                $this->config['fileManagerListPath'],
+                $request))->getList();
+        }else if (RC_Config('ueditor.core.mode') == 'qiniu') {
+            $result = with(new ListsQiniu(
+                $this->config['fileManagerAllowFiles'],
+                $this->config['fileManagerListSize'],
+                $this->config['fileManagerListPath'],
+                $request))->getList();
+        }
+        return $result;
+    }
+    
+    /**
+     * 抓取远程文件
+     * @param Request $request
+     */
+    public function catchimage(Request $request)
+    {
+        $upConfig = array(
+            "pathFormat"    => $this->config['catcherPathFormat'],
+            "maxSize"       => $this->config['catcherMaxSize'],
+            "allowFiles"    => $this->config['catcherAllowFiles'],
+            "oriName"       => "remote.png",
+            'fieldName'     => $this->config['catcherFieldName'],
+        );
+        
+        $sources = \Input::get($upConfig['fieldName']);
+        $list = [];
+        foreach ($sources as $imgUrl) {
+            $upConfig['imgUrl'] = $imgUrl;
+            $info = with(new UploadCatch($upConfig, $request))->upload();
+        
+            array_push($list, array(
+                "state"     => $info["state"],
+                "url"       => $info["url"],
+                "size"      => $info["size"],
+                "title"     => htmlspecialchars($info["title"]),
+                "original"  => htmlspecialchars($info["original"]),
+                "source"    => htmlspecialchars($imgUrl)
+            ));
+        }
+        $result = [
+            'state' => count($list) ? 'SUCCESS' : 'ERROR',
+            'list' => $list
+        ];
+        return $result;
+    }
+
+    public function server(Request $request)
+    {
+        $action = $request->get('action');
+
+        if (function_exists(array($this, $action))) {
+            $result = $this->$action($request);
+        }
+        
+        return RC_Response::json($result, 200, array(), JSON_UNESCAPED_UNICODE);
+    }
+
+}
