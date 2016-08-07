@@ -12,7 +12,7 @@ class UEditorController extends BaseController
 
     public function __construct()
     {
-        $this->config = RC_Config('ueditor.upload');
+        $this->config = \RC_Config::get('ueditor::ueditor.upload');
     }
 
     public function config(Request $request) 
@@ -75,7 +75,7 @@ class UEditorController extends BaseController
      */
     public function listimage(Request $request)
     {
-        $result = with(new Lists(
+        $result = with(new FileManager(
                 $this->config['imageManagerAllowFiles'],
                 $this->config['imageManagerListSize'],
                 $this->config['imageManagerListPath'],
@@ -89,7 +89,7 @@ class UEditorController extends BaseController
      */
     public function listfile(Request $request)
     {
-        $result = with(new Lists(
+        $result = with(new FileManager(
             $this->config['fileManagerAllowFiles'],
             $this->config['fileManagerListSize'],
             $this->config['fileManagerListPath'],
@@ -112,7 +112,7 @@ class UEditorController extends BaseController
         );
         
         $sources = \Input::get($upConfig['fieldName']);
-        $list = [];
+        $list = array();
         foreach ($sources as $imgUrl) {
             $upConfig['imgUrl'] = $imgUrl;
             $info = with(new UploadCatch($upConfig, $request))->upload();
@@ -126,22 +126,27 @@ class UEditorController extends BaseController
                 "source"    => htmlspecialchars($imgUrl)
             ));
         }
-        $result = [
+        $result = array(
             'state' => count($list) ? 'SUCCESS' : 'ERROR',
             'list' => $list
-        ];
+        );
         return $result;
     }
 
-    public function server(Request $request)
+    public function server()
     {
+        $request = royalcms('request');
         $action = $request->get('action');
 
-        if (function_exists(array($this, $action))) {
+        if (method_exists($this, $action)) {
             $result = $this->$action($request);
+        } else {
+            $result = $this->uploadfile($request);
         }
         
-        return RC_Response::json($result, 200, array(), JSON_UNESCAPED_UNICODE);
+        if (!defined('JSON_UNESCAPED_UNICODE')) define('JSON_UNESCAPED_UNICODE', 256);
+        
+        return \RC_Response::json($result, 200, array(), JSON_UNESCAPED_UNICODE);
     }
 
 }

@@ -1,18 +1,16 @@
 <?php namespace Royalcms\Component\UEditor\Uploader;
 
-use Royalcms\Component\UEditor\Uploader\UploadAbstract;
+use Royalcms\Component\Support\Facades\Filesystem;
 
 /**
  * Class UploadScrawl
  * 涂鸦上传
  * @package Royalcms\Component\UEditor\Uploader
  */
-class UploadScrawl extends UploadAbstract
+class UploadScrawl extends UploadBase
 {
-    use UploadQiniu;
 
-
-    public function doUpload()
+    public function uploadCore()
     {
 
         $base64Data = $this->request->get($this->fileField);
@@ -42,41 +40,29 @@ class UploadScrawl extends UploadAbstract
             $this->stateInfo = $this->getStateInfo("ERROR_SIZE_EXCEED");
             return false;
         }
+        
+        $filesystem = Filesystem::disk();
 
-
-        if(config('UEditorUpload.core.mode')=='local'){
-            //创建目录失败
-            if (!file_exists($dirname) && !mkdir($dirname, 0777, true)) {
-                $this->stateInfo = $this->getStateInfo("ERROR_CREATE_DIR");
-                return false;
-            } else if (!is_writeable($dirname)) {
-                $this->stateInfo = $this->getStateInfo("ERROR_DIR_NOT_WRITEABLE");
-                return false;
-            }
-
-            //移动文件
-            if (!(file_put_contents($this->filePath, $img) && file_exists($this->filePath))) { //移动失败
-                $this->stateInfo = $this->getStateInfo("ERROR_WRITE_CONTENT");
-            } else { //移动成功
-                $this->stateInfo = $this->stateMap[0];
-                return false;
-            }
-
-        }else if(config('UEditorUpload.core.mode')=='qiniu'){
-
-
-            return $this->uploadQiniu($this->filePath,$img);
-
-        }else{
-            $this->stateInfo = $this->getStateInfo("ERROR_UNKNOWN_MODE");
+        //创建目录失败
+        if (! $filesystem->exists($dirname) && ! $filesystem->mkdir($dirname)) {
+            $this->stateInfo = $this->getStateInfo("ERROR_CREATE_DIR");
+            return false;
+        } else if (!$filesystem->is_writable($dirname)) {
+            $this->stateInfo = $this->getStateInfo("ERROR_DIR_NOT_WRITEABLE");
             return false;
         }
 
-
-
-
-
-
+        //移动文件       
+        //移动失败
+        if (!($filesystem->put_contents($this->filePath, $img) && $filesystem->exists($this->filePath))) {
+            $this->stateInfo = $this->getStateInfo("ERROR_WRITE_CONTENT");
+            return false;
+        }
+        //移动成功
+        else {
+            $this->stateInfo = $this->stateMap[0];
+            return true;
+        }
     }
 
 
